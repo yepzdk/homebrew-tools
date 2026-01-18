@@ -1,0 +1,132 @@
+name: Update CSM Formula
+
+on:
+  repository_dispatch:
+    types: [update-csm]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (without v prefix, e.g., 0.2.2)'
+        required: true
+        type: string
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set version from input
+        id: version
+        env:
+          DISPATCH_VERSION: ${{ github.event.client_payload.version }}
+          INPUT_VERSION: ${{ inputs.version }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "repository_dispatch" ]; then
+            VERSION="$DISPATCH_VERSION"
+          else
+            VERSION="$INPUT_VERSION"
+          fi
+
+          # Validate version format (semver without v prefix)
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
+            echo "Error: Invalid version format '$VERSION'. Expected format: X.Y.Z"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download binaries and calculate SHA256 hashes
+        id: hashes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          BASE_URL="https://github.com/yepzdk/claude-sessions-monitor/releases/download/v${VERSION}"
+
+          echo "Downloading binaries for version ${VERSION}..."
+
+          # Download all binaries
+          curl -sL --fail -o csm-darwin-arm64 "${BASE_URL}/csm-darwin-arm64" || { echo "Failed to download csm-darwin-arm64"; exit 1; }
+          curl -sL --fail -o csm-darwin-amd64 "${BASE_URL}/csm-darwin-amd64" || { echo "Failed to download csm-darwin-amd64"; exit 1; }
+          curl -sL --fail -o csm-linux-arm64 "${BASE_URL}/csm-linux-arm64" || { echo "Failed to download csm-linux-arm64"; exit 1; }
+          curl -sL --fail -o csm-linux-amd64 "${BASE_URL}/csm-linux-amd64" || { echo "Failed to download csm-linux-amd64"; exit 1; }
+
+          # Calculate SHA256 hashes
+          echo "sha256_darwin_arm64=$(sha256sum csm-darwin-arm64 | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "sha256_darwin_amd64=$(sha256sum csm-darwin-amd64 | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "sha256_linux_arm64=$(sha256sum csm-linux-arm64 | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "sha256_linux_amd64=$(sha256sum csm-linux-amd64 | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+          echo "SHA256 hashes calculated successfully"
+
+      - name: Update formula
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA256_DARWIN_ARM64: ${{ steps.hashes.outputs.sha256_darwin_arm64 }}
+          SHA256_DARWIN_AMD64: ${{ steps.hashes.outputs.sha256_darwin_amd64 }}
+          SHA256_LINUX_ARM64: ${{ steps.hashes.outputs.sha256_linux_arm64 }}
+          SHA256_LINUX_AMD64: ${{ steps.hashes.outputs.sha256_linux_amd64 }}
+        run: |
+          cat > Formula/csm.rb << 'FORMULA_EOF'
+          class Csm < Formula
+            desc "CLI tool to monitor Claude Code sessions"
+            homepage "https://github.com/yepzdk/claude-sessions-monitor"
+            version "VERSION_PLACEHOLDER"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/vVERSION_PLACEHOLDER/csm-darwin-arm64"
+                sha256 "SHA256_DARWIN_ARM64_PLACEHOLDER"
+              end
+              on_intel do
+                url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/vVERSION_PLACEHOLDER/csm-darwin-amd64"
+                sha256 "SHA256_DARWIN_AMD64_PLACEHOLDER"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/vVERSION_PLACEHOLDER/csm-linux-arm64"
+                sha256 "SHA256_LINUX_ARM64_PLACEHOLDER"
+              end
+              on_intel do
+                url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/vVERSION_PLACEHOLDER/csm-linux-amd64"
+                sha256 "SHA256_LINUX_AMD64_PLACEHOLDER"
+              end
+            end
+
+            def install
+              bin.install Dir["*"].first => "csm"
+            end
+
+            test do
+              assert_match "csm version", shell_output("#{bin}/csm -v")
+            end
+          end
+          FORMULA_EOF
+
+          # Replace placeholders with actual values
+          sed -i "s/VERSION_PLACEHOLDER/${VERSION}/g" Formula/csm.rb
+          sed -i "s/SHA256_DARWIN_ARM64_PLACEHOLDER/${SHA256_DARWIN_ARM64}/g" Formula/csm.rb
+          sed -i "s/SHA256_DARWIN_AMD64_PLACEHOLDER/${SHA256_DARWIN_AMD64}/g" Formula/csm.rb
+          sed -i "s/SHA256_LINUX_ARM64_PLACEHOLDER/${SHA256_LINUX_ARM64}/g" Formula/csm.rb
+          sed -i "s/SHA256_LINUX_AMD64_PLACEHOLDER/${SHA256_LINUX_AMD64}/g" Formula/csm.rb
+
+          # Remove leading whitespace from heredoc
+          sed -i 's/^          //' Formula/csm.rb
+
+          echo "Formula updated to version ${VERSION}"
+          cat Formula/csm.rb
+
+      - name: Commit and push changes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/csm.rb
+          git commit -m "Update csm formula to v${VERSION}"
+          git push
