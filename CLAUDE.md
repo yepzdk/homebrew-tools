@@ -23,10 +23,13 @@ Automatically updates the `csm` (Claude Sessions Monitor) formula when a new rel
 4. Regenerates `Formula/csm.rb` with new version and hashes
 5. Commits and pushes the changes
 
+**Required secrets (in this repo):**
+- `GH_PAT`: Personal Access Token with `repo` scope for pushing commits. Required because `GITHUB_TOKEN` doesn't have write access for `repository_dispatch` events triggered from another repo.
+
 **Debugging:**
 - If downloads fail: Check that the release exists at `https://github.com/yepzdk/claude-sessions-monitor/releases/tag/vX.Y.Z` and all 4 binaries are uploaded
 - If version validation fails: Ensure version is passed without `v` prefix (e.g., "0.2.2" not "v0.2.2")
-- If push fails: Check that the workflow has write permissions to the repository (Settings > Actions > General > Workflow permissions)
+- If push fails (exit code 128): Ensure `GH_PAT` secret is set with a valid PAT that has `repo` scope
 
 **Triggering from claude-sessions-monitor:**
 The release workflow in claude-sessions-monitor should include:
