@@ -1,28 +1,28 @@
 class Csm < Formula
   desc "CLI tool to monitor Claude Code sessions"
   homepage "https://github.com/yepzdk/claude-sessions-monitor"
-  version "0.3.12"
+  version "0.3.13"
   license "MIT"
 
   on_macos do
     on_arm do
-      url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/v0.3.12/csm-darwin-arm64"
-      sha256 "466a95ba68e24369f95f92e6880fdf20bf69e8b25a69610ea56951fee7392d62"
+      url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/v0.3.13/csm-darwin-arm64"
+      sha256 "861ead3c3b77826e52a4e8d7887ac26de94e84665370a6b74aec9a47e1281784"
     end
     on_intel do
-      url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/v0.3.12/csm-darwin-amd64"
-      sha256 "e76a088db8c6c7b8e42a4686dcbb6928d200b00b800116df2c7adabf53bb7cf1"
+      url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/v0.3.13/csm-darwin-amd64"
+      sha256 "dd3c9163d39c6da789296f69fc738deabef9e4188f610f31b481bb1c60b1a2c4"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/v0.3.12/csm-linux-arm64"
-      sha256 "23673c74247fdcb000be7313841e8c85b390c38dcf3778411d215815d5971c27"
+      url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/v0.3.13/csm-linux-arm64"
+      sha256 "53ade9c7489f228932bf7d10f0b74defc1429a4b8b17179683a9fe32f93da5a7"
     end
     on_intel do
-      url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/v0.3.12/csm-linux-amd64"
-      sha256 "deea06c09d60f5884f577fed2da952a657f59af8fb020a6d02b91e1c3e2ecffe"
+      url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/v0.3.13/csm-linux-amd64"
+      sha256 "b0b119e18f511e8c5320cbed0bd316e1d06e75de4f9fa9a4ac92fc8b4b808f53"
     end
   end
 
