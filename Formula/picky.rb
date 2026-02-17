@@ -1,28 +1,28 @@
 class Picky < Formula
   desc "Helper tool to keep Claude in line and create great quality code"
   homepage "https://github.com/yepzdk/picky-claude"
-  version "0.2.0"
+  version "0.3.0"
   license :cannot_represent
 
   on_macos do
     on_arm do
-      url "https://github.com/yepzdk/picky-claude/releases/download/v0.2.0/picky-darwin-arm64"
-      sha256 "fbd45d61cbf2f2ce93980877e654898721a3e6bdb73e899bc44cb48c933cce33"
+      url "https://github.com/yepzdk/picky-claude/releases/download/v0.3.0/picky-darwin-arm64"
+      sha256 "1edc87fcf26bfe2b3acba89994ffb9c0b12f13cad2693f5b2c98baaa586188e8"
     end
     on_intel do
-      url "https://github.com/yepzdk/picky-claude/releases/download/v0.2.0/picky-darwin-amd64"
-      sha256 "536b2bb94a556d45aa3ff40ebdbea15a754d0d1f5e5d58321a1fce2d28c59c93"
+      url "https://github.com/yepzdk/picky-claude/releases/download/v0.3.0/picky-darwin-amd64"
+      sha256 "c8318a67473d92f3c669bef2f5cc1266eba482fcdad90fc44b1e7a1e4c93edcf"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/yepzdk/picky-claude/releases/download/v0.2.0/picky-linux-arm64"
-      sha256 "430169df51db85ecf1fddb184b4c796ce671ff50a7c2f962693ec7bf61d1f11d"
+      url "https://github.com/yepzdk/picky-claude/releases/download/v0.3.0/picky-linux-arm64"
+      sha256 "5b3af485ede16b308df787864cdbf96a54f112f2c7710f637bfa2a6846510e9f"
     end
     on_intel do
-      url "https://github.com/yepzdk/picky-claude/releases/download/v0.2.0/picky-linux-amd64"
-      sha256 "0a2889e828e8d95ad686aa9488bb0cfd7b9fbda2b369477a9a4ea209ea2d2ea3"
+      url "https://github.com/yepzdk/picky-claude/releases/download/v0.3.0/picky-linux-amd64"
+      sha256 "50a708d36969e8f3be38c51fe47c9f87c56a3f65bde6becb3a9a6d7a94c1e336"
     end
   end
 
