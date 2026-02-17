@@ -1,0 +1,136 @@
+name: Update Picky Formula
+
+on:
+  repository_dispatch:
+    types: [update-picky]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (without v prefix, e.g., 0.1.0)'
+        required: true
+        type: string
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Set version from input
+        id: version
+        env:
+          DISPATCH_VERSION: ${{ github.event.client_payload.version }}
+          INPUT_VERSION: ${{ inputs.version }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "repository_dispatch" ]; then
+            VERSION="$DISPATCH_VERSION"
+          else
+            VERSION="$INPUT_VERSION"
+          fi
+
+          # Validate version format (semver without v prefix)
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
+            echo "Error: Invalid version format '$VERSION'. Expected format: X.Y.Z"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download binaries and calculate SHA256 hashes
+        id: hashes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          BASE_URL="https://github.com/yepzdk/picky-claude/releases/download/v${VERSION}"
+
+          echo "Downloading binaries for version ${VERSION}..."
+
+          # Download all binaries
+          curl -sL --fail -o picky-darwin-arm64 "${BASE_URL}/picky-darwin-arm64" || { echo "Failed to download picky-darwin-arm64"; exit 1; }
+          curl -sL --fail -o picky-darwin-amd64 "${BASE_URL}/picky-darwin-amd64" || { echo "Failed to download picky-darwin-amd64"; exit 1; }
+          curl -sL --fail -o picky-linux-arm64 "${BASE_URL}/picky-linux-arm64" || { echo "Failed to download picky-linux-arm64"; exit 1; }
+          curl -sL --fail -o picky-linux-amd64 "${BASE_URL}/picky-linux-amd64" || { echo "Failed to download picky-linux-amd64"; exit 1; }
+
+          # Calculate SHA256 hashes
+          echo "sha256_darwin_arm64=$(sha256sum picky-darwin-arm64 | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "sha256_darwin_amd64=$(sha256sum picky-darwin-amd64 | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "sha256_linux_arm64=$(sha256sum picky-linux-arm64 | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "sha256_linux_amd64=$(sha256sum picky-linux-amd64 | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+          echo "SHA256 hashes calculated successfully"
+
+      - name: Update formula
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA256_DARWIN_ARM64: ${{ steps.hashes.outputs.sha256_darwin_arm64 }}
+          SHA256_DARWIN_AMD64: ${{ steps.hashes.outputs.sha256_darwin_amd64 }}
+          SHA256_LINUX_ARM64: ${{ steps.hashes.outputs.sha256_linux_arm64 }}
+          SHA256_LINUX_AMD64: ${{ steps.hashes.outputs.sha256_linux_amd64 }}
+        run: |
+          cat > Formula/picky.rb << 'FORMULA_EOF'
+          class Picky < Formula
+            desc "Helper tool to keep Claude in line and create great quality code"
+            homepage "https://github.com/yepzdk/picky-claude"
+            version "VERSION_PLACEHOLDER"
+            license :cannot_represent
+
+            on_macos do
+              on_arm do
+                url "https://github.com/yepzdk/picky-claude/releases/download/vVERSION_PLACEHOLDER/picky-darwin-arm64"
+                sha256 "SHA256_DARWIN_ARM64_PLACEHOLDER"
+              end
+              on_intel do
+                url "https://github.com/yepzdk/picky-claude/releases/download/vVERSION_PLACEHOLDER/picky-darwin-amd64"
+                sha256 "SHA256_DARWIN_AMD64_PLACEHOLDER"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/yepzdk/picky-claude/releases/download/vVERSION_PLACEHOLDER/picky-linux-arm64"
+                sha256 "SHA256_LINUX_ARM64_PLACEHOLDER"
+              end
+              on_intel do
+                url "https://github.com/yepzdk/picky-claude/releases/download/vVERSION_PLACEHOLDER/picky-linux-amd64"
+                sha256 "SHA256_LINUX_AMD64_PLACEHOLDER"
+              end
+            end
+
+            def install
+              bin.install Dir["*"].first => "picky"
+            end
+
+            test do
+              assert_match "picky", shell_output("#{bin}/picky --version")
+            end
+          end
+          FORMULA_EOF
+
+          # Replace placeholders with actual values
+          sed -i "s/VERSION_PLACEHOLDER/${VERSION}/g" Formula/picky.rb
+          sed -i "s/SHA256_DARWIN_ARM64_PLACEHOLDER/${SHA256_DARWIN_ARM64}/g" Formula/picky.rb
+          sed -i "s/SHA256_DARWIN_AMD64_PLACEHOLDER/${SHA256_DARWIN_AMD64}/g" Formula/picky.rb
+          sed -i "s/SHA256_LINUX_ARM64_PLACEHOLDER/${SHA256_LINUX_ARM64}/g" Formula/picky.rb
+          sed -i "s/SHA256_LINUX_AMD64_PLACEHOLDER/${SHA256_LINUX_AMD64}/g" Formula/picky.rb
+
+          # Remove leading whitespace from heredoc
+          sed -i 's/^          //' Formula/picky.rb
+
+          echo "Formula updated to version ${VERSION}"
+          cat Formula/picky.rb
+
+      - name: Commit and push changes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/picky.rb
+          git commit -m "Update picky formula to v${VERSION}"
+          git push

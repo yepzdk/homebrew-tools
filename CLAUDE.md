@@ -46,3 +46,46 @@ The release workflow in claude-sessions-monitor should include:
 ```
 
 Requires a PAT with `repo` scope stored as `HOMEBREW_TAP_TOKEN` secret.
+
+### Update Picky Formula (`.github/workflows/update-picky.yml`)
+
+Automatically updates the `picky` (Picky Claude) formula when a new release is published.
+
+**Triggers:**
+- `repository_dispatch` with type `update-picky` (triggered from picky-claude releases)
+- `workflow_dispatch` for manual runs (version input required, e.g., "0.1.0")
+
+**What it does:**
+1. Validates version format (X.Y.Z semver without `v` prefix)
+2. Downloads all 4 binaries from the release:
+   - `picky-darwin-arm64`
+   - `picky-darwin-amd64`
+   - `picky-linux-arm64`
+   - `picky-linux-amd64`
+3. Calculates SHA256 hashes for each binary
+4. Regenerates `Formula/picky.rb` with new version and hashes
+5. Commits and pushes the changes
+
+**Required secrets (in this repo):**
+- `GH_PAT`: Same PAT as used for csm (already configured).
+
+**Debugging:**
+- If downloads fail: Check that the release exists at `https://github.com/yepzdk/picky-claude/releases/tag/vX.Y.Z` and all 4 binaries are uploaded
+- If version validation fails: Ensure version is passed without `v` prefix (e.g., "0.1.0" not "v0.1.0")
+- If push fails (exit code 128): Ensure `GH_PAT` secret is set with a valid PAT that has `repo` scope
+
+**Triggering from picky-claude:**
+The release workflow in picky-claude should include:
+```yaml
+- name: Update Homebrew formula
+  env:
+    HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+  run: |
+    curl -X POST \
+      -H "Accept: application/vnd.github+json" \
+      -H "Authorization: token $HOMEBREW_TAP_TOKEN" \
+      https://api.github.com/repos/yepzdk/homebrew-tools/dispatches \
+      -d "{\"event_type\":\"update-picky\",\"client_payload\":{\"version\":\"${GITHUB_REF_NAME#v}\"}}"
+```
+
+Requires a PAT with `repo` scope stored as `HOMEBREW_TAP_TOKEN` secret in the picky-claude repo.
