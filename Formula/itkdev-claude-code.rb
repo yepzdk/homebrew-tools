@@ -1,28 +1,28 @@
 class ItkdevClaudeCode < Formula
   desc "Helper tool to keep Claude in line and create great quality code"
   homepage "https://github.com/yepzdk/itkdev-claude-code"
-  version "0.8.0"
+  version "0.9.0"
   license :cannot_represent
 
   on_macos do
     on_arm do
-      url "https://github.com/yepzdk/itkdev-claude-code/releases/download/v0.8.0/itkdev-claude-code-darwin-arm64"
-      sha256 "2d00abee29202e61053160dd8bbcebb4d7421dedfb5fbf9fdb4f7c45e70147e6"
+      url "https://github.com/yepzdk/itkdev-claude-code/releases/download/v0.9.0/itkdev-claude-code-darwin-arm64"
+      sha256 "0ab8dd91e75965cc826503887b12f6789edd0a091fb54d7c97b337e7734a131f"
     end
     on_intel do
-      url "https://github.com/yepzdk/itkdev-claude-code/releases/download/v0.8.0/itkdev-claude-code-darwin-amd64"
-      sha256 "8854421790c482033dbe7c5345ccd9c68a8b7acbb25760e10456f19e282233b5"
+      url "https://github.com/yepzdk/itkdev-claude-code/releases/download/v0.9.0/itkdev-claude-code-darwin-amd64"
+      sha256 "12419d3111e22f96140af745c8d95d8ef10186566af7b727eb494ffa42d82af5"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/yepzdk/itkdev-claude-code/releases/download/v0.8.0/itkdev-claude-code-linux-arm64"
-      sha256 "7568e4e009222e79551b3f57c3bcae54fbf06b92bdc06859a4a70f14b8ceb7b8"
+      url "https://github.com/yepzdk/itkdev-claude-code/releases/download/v0.9.0/itkdev-claude-code-linux-arm64"
+      sha256 "eb77357d2a8a48ff597c97fe6ac99c52f8db2c0b98872b8fa631e45ae1220531"
     end
     on_intel do
-      url "https://github.com/yepzdk/itkdev-claude-code/releases/download/v0.8.0/itkdev-claude-code-linux-amd64"
-      sha256 "17dde974cee8d81b63801aeb8d17e2e0833addac8dbd2f9b5551960f07f859eb"
+      url "https://github.com/yepzdk/itkdev-claude-code/releases/download/v0.9.0/itkdev-claude-code-linux-amd64"
+      sha256 "65a876e2a3e4ba894b177b160b8d1dad4e09ce390ecfeda8da40fb7fbca1ed0b"
     end
   end
 
