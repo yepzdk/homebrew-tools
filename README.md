@@ -13,6 +13,7 @@ brew tap yepzdk/tools
 | Formula | Description |
 |---------|-------------|
 | `csm` | Monitor Claude Code sessions |
+| `itkdev-claude-code` | Helper tool to keep Claude in line and create great quality code |
 
 ## Usage
 
