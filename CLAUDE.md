@@ -72,6 +72,22 @@ Automatically updates the `csm-menubar` cask when a new release includes `.app` 
 - If version validation fails: Ensure version is passed without `v` prefix (e.g., "0.4.0" not "v0.4.0")
 - If push fails (exit code 128): Ensure `GH_PAT` secret is set with a valid PAT that has `repo` scope
 
+**Triggering from claude-sessions-monitor:**
+The release workflow in claude-sessions-monitor should include:
+```yaml
+- name: Update Homebrew menubar cask
+  env:
+    HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+  run: |
+    curl -X POST \
+      -H "Accept: application/vnd.github+json" \
+      -H "Authorization: token $HOMEBREW_TAP_TOKEN" \
+      https://api.github.com/repos/yepzdk/homebrew-tools/dispatches \
+      -d "{\"event_type\":\"update-csm-menubar\",\"client_payload\":{\"version\":\"${GITHUB_REF_NAME#v}\"}}"
+```
+
+Requires a PAT with `repo` scope stored as `HOMEBREW_TAP_TOKEN` secret in the claude-sessions-monitor repo.
+
 **Install via Homebrew:**
 ```bash
 brew install --cask yepzdk/tools/csm-menubar

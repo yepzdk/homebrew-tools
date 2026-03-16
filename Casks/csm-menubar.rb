@@ -14,6 +14,7 @@ cask "csm-menubar" do
   name "CSM Menu Bar"
   desc "macOS menu bar app for monitoring Claude Code sessions"
   homepage "https://github.com/yepzdk/claude-sessions-monitor"
+  license "MIT"
 
   app "CSMMenuBar.app"
 
