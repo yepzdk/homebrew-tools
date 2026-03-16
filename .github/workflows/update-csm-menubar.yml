@@ -1,0 +1,112 @@
+name: Update CSM MenuBar Cask
+
+on:
+  repository_dispatch:
+    types: [update-csm-menubar]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (without v prefix, e.g., 0.4.0)'
+        required: true
+        type: string
+
+jobs:
+  update-cask:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Set version from input
+        id: version
+        env:
+          DISPATCH_VERSION: ${{ github.event.client_payload.version }}
+          INPUT_VERSION: ${{ inputs.version }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "repository_dispatch" ]; then
+            VERSION="$DISPATCH_VERSION"
+          else
+            VERSION="$INPUT_VERSION"
+          fi
+
+          # Validate version format (semver without v prefix)
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
+            echo "Error: Invalid version format '$VERSION'. Expected format: X.Y.Z"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download zips and calculate SHA256 hashes
+        id: hashes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          BASE_URL="https://github.com/yepzdk/claude-sessions-monitor/releases/download/v${VERSION}"
+
+          echo "Downloading menubar zips for version ${VERSION}..."
+
+          curl -sL --fail -o CSMMenuBar-darwin-arm64.zip "${BASE_URL}/CSMMenuBar-darwin-arm64.zip" || { echo "Failed to download CSMMenuBar-darwin-arm64.zip"; exit 1; }
+          curl -sL --fail -o CSMMenuBar-darwin-amd64.zip "${BASE_URL}/CSMMenuBar-darwin-amd64.zip" || { echo "Failed to download CSMMenuBar-darwin-amd64.zip"; exit 1; }
+
+          echo "sha256_arm64=$(sha256sum CSMMenuBar-darwin-arm64.zip | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "sha256_amd64=$(sha256sum CSMMenuBar-darwin-amd64.zip | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+          echo "SHA256 hashes calculated successfully"
+
+      - name: Update cask
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA256_ARM64: ${{ steps.hashes.outputs.sha256_arm64 }}
+          SHA256_AMD64: ${{ steps.hashes.outputs.sha256_amd64 }}
+        run: |
+          cat > Casks/csm-menubar.rb << 'CASK_EOF'
+          cask "csm-menubar" do
+            version "VERSION_PLACEHOLDER"
+
+            on_arm do
+              sha256 "SHA256_ARM64_PLACEHOLDER"
+              url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/v#{version}/CSMMenuBar-darwin-arm64.zip"
+            end
+
+            on_intel do
+              sha256 "SHA256_AMD64_PLACEHOLDER"
+              url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/v#{version}/CSMMenuBar-darwin-amd64.zip"
+            end
+
+            name "CSM Menu Bar"
+            desc "macOS menu bar app for monitoring Claude Code sessions"
+            homepage "https://github.com/yepzdk/claude-sessions-monitor"
+            license "MIT"
+
+            app "CSMMenuBar.app"
+
+            zap trash: "~/Library/Preferences/com.yepzdk.CSMMenuBar.plist"
+          end
+          CASK_EOF
+
+          # Replace placeholders with actual values
+          sed -i "s/VERSION_PLACEHOLDER/${VERSION}/g" Casks/csm-menubar.rb
+          sed -i "s/SHA256_ARM64_PLACEHOLDER/${SHA256_ARM64}/g" Casks/csm-menubar.rb
+          sed -i "s/SHA256_AMD64_PLACEHOLDER/${SHA256_AMD64}/g" Casks/csm-menubar.rb
+
+          # Remove leading whitespace from heredoc
+          sed -i 's/^          //' Casks/csm-menubar.rb
+
+          echo "Cask updated to version ${VERSION}"
+          cat Casks/csm-menubar.rb
+
+      - name: Commit and push changes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/csm-menubar.rb
+          git commit -m "Update csm-menubar cask to v${VERSION}"
+          git push
