@@ -1,13 +1,13 @@
 cask "csm-menubar" do
-  version "0.3.34"
+  version "0.3.35"
 
   on_arm do
-    sha256 "492e80f3e51a65d99fc30cc207e383a04de2c004e9d4a6863478ae791ed9edf4"
+    sha256 "2152586495bf33cf94bd0c17b40be5d5ff824977a3095b751777e726cc011c79"
     url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/v#{version}/CSMMenuBar-darwin-arm64.zip"
   end
 
   on_intel do
-    sha256 "1bea1b15ed7c4f1d28358391b6d1114f4b7907abcd425f425e2a117b49f286f0"
+    sha256 "8f87a729fc481b0ac06bb67c3221ceb50e058a0d4c5e154c8e2dfd31b16b3988"
     url "https://github.com/yepzdk/claude-sessions-monitor/releases/download/v#{version}/CSMMenuBar-darwin-amd64.zip"
   end
 
