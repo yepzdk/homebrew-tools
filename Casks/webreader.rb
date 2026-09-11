@@ -1,6 +1,6 @@
 cask "webreader" do
-  version "0.13.0"
-  sha256 "4536b6d95e5404d424386fb00ca6ed1423b8c5f423ad9f33be9d5ea689ebce34"
+  version "0.14.0"
+  sha256 "0c588c0ced39c954f4d7d48a7752ebfb93c909867f81f7a284506e4d32c4ddc4"
 
   url "https://github.com/yepzdk/webreader/releases/download/v#{version}/WebReader-#{version}.zip"
   name "WebReader"
